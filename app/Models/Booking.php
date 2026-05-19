@@ -74,12 +74,14 @@ class Booking extends Model
         return $query->where('departure_date', '<=', $date);
     }
 
+    /** Pencarian berdasarkan nama pemesan atau kontak (HP/email). */
     public function scopeSearch($query, string $keyword)
     {
-        return $query->where(function ($q) use ($keyword) {
-            $q->where('name', 'like', "%{$keyword}%")
-                ->orWhere('contact', 'like', "%{$keyword}%")
-                ->orWhereHas('travelPackage', fn ($q2) => $q2->where('name', 'like', "%{$keyword}%"));
+        $term = '%'.addcslashes(trim($keyword), '%_\\').'%';
+
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', $term)
+                ->orWhere('contact', 'like', $term);
         });
     }
 

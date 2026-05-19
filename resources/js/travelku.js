@@ -74,13 +74,12 @@ document.addEventListener('alpine:init', () => {
             if (this.filters.package) list = list.filter((b) => b.package === this.filters.package);
             if (this.filters.dateFrom) list = list.filter((b) => b.departureDate >= this.filters.dateFrom);
             if (this.filters.dateTo) list = list.filter((b) => b.departureDate <= this.filters.dateTo);
-            if (this.search) {
-                const q = this.search.toLowerCase();
+            if (this.search.trim()) {
+                const q = this.search.trim().toLowerCase();
                 list = list.filter(
                     (b) =>
                         b.name.toLowerCase().includes(q) ||
-                        b.contact.toLowerCase().includes(q) ||
-                        b.package.toLowerCase().includes(q),
+                        b.contact.toLowerCase().includes(q),
                 );
             }
             return list;

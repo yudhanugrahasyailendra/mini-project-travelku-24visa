@@ -1,59 +1,222 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TravelKu — Sistem Agen Perjalanan
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web internal untuk **mengelola pemesanan paket wisata** pada agen perjalanan. Staff dapat mencatat pemesan, memantau status, memfilter data, dan melihat ringkasan pendapatan dari satu dashboard.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack & Teknologi
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Teknologi | Peran | Alasan singkat |
+|-----------|-------|------------------|
+| **Laravel 12** (PHP 8.2+) | Backend, routing, validasi, ORM | Framework matang untuk CRUD, API, migrasi, dan aturan bisnis yang jelas. |
+| **SQLite** (default) / MySQL | Database | SQLite memudahkan setup lokal tanpa server DB terpisah; MySQL siap dipakai lewat `.env` untuk produksi. |
+| **Blade** | Template HTML | Render halaman awal + injeksi data awal ke frontend dengan ringan. |
+| **Alpine.js 3** | Interaktivitas UI | Reaktif di sisi klien tanpa membangun SPA penuh; cocok untuk dashboard admin. |
+| **Tailwind CSS 4** | Styling | UI konsisten dan responsif dengan utility class; cepat diiterasi. |
+| **Vite 7** | Bundler asset | Build CSS/JS modern dengan HMR saat development. |
+| **Axios** | HTTP client | Memanggil API Laravel (CRUD booking, validasi) dari browser. |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Prasyarat
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Pastikan terpasang di mesin Anda:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **PHP** ≥ 8.2 (ekstensi: `pdo`, `sqlite3` atau `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`)
+- **Composer**
+- **Node.js** ≥ 18 dan **npm**
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Cara Menjalankan di Lokal
 
-### Premium Partners
+### 1. Clone & masuk ke folder proyek
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+git clone <url-repository> travelku
+cd travelku
+```
 
-## Contributing
+### 2. Instal dependensi PHP
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer install
+```
 
-## Code of Conduct
+### 3. Siapkan environment
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+Secara default proyek memakai **SQLite**. Pastikan file database ada:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Windows (PowerShell)
+New-Item -ItemType File -Force database/database.sqlite
 
-## License
+# Linux / macOS
+touch database/database.sqlite
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+> **Opsi MySQL:** ubah di `.env` → `DB_CONNECTION=mysql`, isi `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, lalu buat database kosong di MySQL.
+
+### 4. Migrasi & data contoh
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+Seeder akan mengisi **paket wisata** dan **contoh pemesanan** agar UI langsung bisa dicoba.
+
+### 5. Instal & build asset frontend
+
+```bash
+npm install
+npm run build
+```
+
+Untuk development dengan hot-reload CSS/JS, jalankan di terminal terpisah:
+
+```bash
+npm run dev
+```
+
+### 6. Jalankan server
+
+```bash
+php artisan serve
+```
+
+Buka browser: **http://127.0.0.1:8000**
+
+### Ringkas (satu perintah setup)
+
+Jika `composer` script tersedia:
+
+```bash
+composer setup
+php artisan db:seed
+php artisan serve
+```
+
+Atau mode development penuh (server + queue + log + Vite):
+
+```bash
+composer dev
+```
+
+---
+
+## Struktur Singkat
+
+```
+app/
+  Http/Controllers/   # BookingController, TravelKuController
+  Models/             # Booking, TravelPackage, BookingStatusLog
+config/travelku.php   # Status & aturan transisi status
+database/
+  migrations/         # Skema bookings, packages, status logs
+  seeders/            # Data awal paket & pemesanan
+resources/
+  js/travelku.js      # Logika Alpine.js (filter, CRUD, pencarian)
+  views/travelku/     # Blade: dashboard, tabel, modal, filter
+routes/web.php        # Route halaman & API booking
+```
+
+---
+
+## Fitur
+
+### Fitur utama — selesai
+
+| Fitur | Keterangan |
+|-------|------------|
+| Daftar pemesanan | Tabel desktop & kartu mobile, urut terbaru |
+| Ringkasan dashboard | Total pemesanan, estimasi pendapatan, jumlah per status |
+| Tambah pemesanan | Form modal dengan validasi |
+| Edit pemesanan | Perbarui data pemesan, paket, tanggal, peserta, harga |
+| Hapus pemesanan | Soft delete |
+| Ubah status | Aturan transisi: Menunggu → Dikonfirmasi/Dibatalkan; Dikonfirmasi → Selesai/Dibatalkan |
+| Riwayat status | Tercatat di `booking_status_logs` |
+| Validasi input | Nama (huruf), kontak (HP Indonesia / email), paket aktif, tanggal tidak lampau, peserta & harga minimum |
+| Filter lanjutan | Status, paket wisata, rentang tanggal keberangkatan |
+| API REST | `GET/POST/PUT/PATCH/DELETE` pada `/bookings` (+ validasi & laporan) |
+| UI responsif | Sidebar, layout mobile-friendly |
+
+### Fitur opsional — selesai
+
+| Fitur | Keterangan |
+|-------|------------|
+| **Pencarian nama pemesan / kontak** | Kotak pencarian di dashboard; filter real-time di browser; scope `search` di API `GET /bookings?search=...` |
+
+### Belum diimplementasi (placeholder di UI / roadmap)
+
+| Fitur | Keterangan |
+|-------|------------|
+| Modul **Data Pelanggan** | Menu sidebar ada, halaman belum dibuat |
+| Modul **Paket Wisata** (CRUD) | Paket hanya di-seed; belum ada halaman kelola paket |
+| Halaman **Laporan** | Endpoint `GET /bookings/report` sudah ada; UI laporan belum |
+| **Autentikasi** login | Aplikasi diasumsikan internal tanpa login |
+| Pagination server-side | Semua data dimuat ke halaman awal |
+
+---
+
+## API Singkat
+
+| Method | Endpoint | Fungsi |
+|--------|----------|--------|
+| `GET` | `/` | Halaman dashboard |
+| `GET` | `/bookings` | Daftar booking (`?status=&package=&date_from=&date_to=&search=`) |
+| `POST` | `/bookings` | Buat booking |
+| `PUT` | `/bookings/{id}` | Update booking |
+| `PATCH` | `/bookings/{id}/status` | Ubah status |
+| `DELETE` | `/bookings/{id}` | Hapus booking |
+| `POST` | `/bookings/validate` | Validasi form sebelum simpan |
+| `GET` | `/bookings/report` | Laporan agregat per paket (JSON) |
+
+---
+
+## Asumsi & Keputusan Teknis
+
+1. **Pengguna tunggal / internal** — Tidak ada autentikasi; semua aksi dicatat sebagai "Staff Agen" di log status.
+2. **Arsitektur ringan** — Blade + Alpine.js, bukan SPA React/Vue, agar scope mini-project tetap terkontrol.
+3. **Filter & pencarian di klien** — Data booking dimuat sekali saat halaman dibuka; filter status/paket/tanggal dan pencarian nama/kontak dijalankan di browser. Cukup untuk ratusan record; API tetap mendukung query untuk integrasi ke depan.
+4. **SQLite sebagai default** — Meminimalkan langkah setup lokal; MySQL siap untuk deployment yang membutuhkan DB bersama.
+5. **Aturan status terpusat** — Transisi status didefinisikan di `config/travelku.php` dan `Booking::STATUS_TRANSITIONS` agar tidak bisa loncat status secara sembarangan.
+6. **Kontak fleksibel** — Menerima nomor HP format `08` / `+62` atau email valid.
+7. **Total harga di database** — Kolom `total_price` generated (`participants × price_per_person`) untuk konsistensi laporan.
+8. **Soft delete** — Pemesanan yang dihapus tidak hilang permanen dari database.
+
+---
+
+## Deployment (opsional)
+
+Proyek menyertakan `nixpacks.toml` untuk deploy platform berbasis Nixpacks (mis. Railway). Alur build: `composer install`, `npm install`, `npm run build`, lalu `php artisan serve`.
+
+Pastikan di production:
+
+- `APP_ENV=production`, `APP_DEBUG=false`
+- `php artisan migrate --force`
+- Database production (MySQL disarankan untuk traffic lebih tinggi)
+
+---
+
+## Hal yang Ingin Diperbaiki (jika ada lebih banyak waktu)
+
+- **Login & otorisasi** — Pembatasan akses per role (admin vs staff).
+- **Pagination & filter server-side** — Agar performa tetap baik saat data ribuan booking.
+- **Halaman laporan UI** — Visualisasi dari endpoint `/bookings/report` (grafik/tabel export).
+- **CRUD paket wisata** — Kelola paket tanpa menyentuh seeder/database manual.
+- **Modul pelanggan terpisah** — Profil pelanggan berulang, riwayat per nama/kontak.
+- **Automated tests** — Feature test untuk CRUD, transisi status, dan pencarian API.
+- **Export PDF/Excel** — Laporan pendapatan untuk kebutuhan administrasi agen.
+- **Notifikasi** — Email/WA saat status berubah ke Dikonfirmasi.
+
+---
+
+## Lisensi
+
+Proyek ini menggunakan [Laravel](https://laravel.com) yang dilisensikan di bawah [MIT license](https://opensource.org/licenses/MIT).

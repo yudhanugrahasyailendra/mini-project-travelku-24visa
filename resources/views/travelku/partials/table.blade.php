@@ -13,7 +13,7 @@
         <template x-if="filtered.length === 0">
             <div class="px-4 py-12 text-center">
                 <svg class="w-10 h-10 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <p class="text-slate-500 font-medium text-sm">Tidak ada pemesanan</p>
+                <p class="text-slate-500 font-medium text-sm" x-text="search.trim() ? 'Tidak ada pemesanan yang cocok dengan pencarian' : 'Tidak ada pemesanan'"></p>
             </div>
         </template>
         <template x-for="b in filtered" :key="'m-' + b.id">
@@ -85,7 +85,7 @@
                     <template x-if="filtered.length === 0">
                         <tr>
                             <td colspan="7" class="px-4 py-14 text-center">
-                                <p class="text-slate-500 font-medium">Tidak ada pemesanan ditemukan</p>
+                                <p class="text-slate-500 font-medium" x-text="search.trim() ? 'Tidak ada pemesanan yang cocok dengan pencarian' : 'Tidak ada pemesanan ditemukan'"></p>
                             </td>
                         </tr>
                     </template>
