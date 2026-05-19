@@ -31,6 +31,7 @@
             <article class="p-3 sm:p-4 space-y-2.5">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0 flex-1">
+                        <p class="text-[11px] font-mono text-teal-700" x-text="b.bookingNumber"></p>
                         <p class="font-semibold text-slate-800 truncate" x-text="b.name"></p>
                         <p class="text-slate-500 text-xs truncate" x-text="b.contact"></p>
                     </div>
@@ -71,9 +72,10 @@
     {{-- Desktop: table --}}
     <div class="hidden md:flex flex-1 min-h-0 flex-col">
         <div class="flex-1 min-h-0 overflow-auto">
-            <table class="booking-table w-full text-sm min-w-[860px]">
+            <table class="booking-table w-full text-sm min-w-[920px]">
                 <colgroup>
-                    <col style="width: 22%" />
+                    <col style="width: 11%" />
+                    <col style="width: 20%" />
                     <col style="width: 14%" />
                     <col style="width: 11%" />
                     <col style="width: 8%" />
@@ -83,6 +85,7 @@
                 </colgroup>
                 <thead class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(226_232_240)]">
                     <tr>
+                        <th class="px-3 lg:px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">No. Booking</th>
                         <th class="px-3 lg:px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Pemesan</th>
                         <th class="px-3 lg:px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Paket</th>
                         <th class="px-3 lg:px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Berangkat</th>
@@ -95,7 +98,7 @@
                 <tbody>
                     <template x-if="filtered.length === 0">
                         <tr>
-                            <td colspan="7" class="px-4 py-14 text-center">
+                            <td colspan="8" class="px-4 py-14 text-center">
                                 <p class="text-slate-500 font-medium" x-text="search.trim() ? 'Tidak ada pemesanan yang cocok dengan pencarian' : 'Tidak ada pemesanan ditemukan'"></p>
                             </td>
                         </tr>
@@ -105,6 +108,9 @@
                             class="border-b border-slate-100 hover:bg-teal-50/50 transition-colors"
                             :class="idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'"
                         >
+                            <td class="px-3 lg:px-4 py-2.5 whitespace-nowrap">
+                                <p class="font-mono text-xs font-semibold text-teal-700" x-text="b.bookingNumber"></p>
+                            </td>
                             <td class="px-3 lg:px-4 py-2.5 max-w-0">
                                 <p class="font-semibold text-slate-800 truncate" x-text="b.name"></p>
                                 <p class="text-slate-500 text-xs truncate mt-0.5" x-text="b.contact"></p>

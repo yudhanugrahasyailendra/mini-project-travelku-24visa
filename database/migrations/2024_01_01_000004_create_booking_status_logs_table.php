@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->enum('old_status', ['Menunggu', 'Dikonfirmasi', 'Selesai', 'Dibatalkan'])->nullable();
             $table->enum('new_status', ['Menunggu', 'Dikonfirmasi', 'Selesai', 'Dibatalkan']);
-            $table->string('changed_by', 100)->nullable()->comment('Nama user/admin yang mengubah');
+            $table->string('changed_by', 100)->nullable();
             $table->text('note')->nullable();
             $table->timestamps();
 

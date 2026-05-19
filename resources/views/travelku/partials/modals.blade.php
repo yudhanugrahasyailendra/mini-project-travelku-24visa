@@ -39,27 +39,30 @@
             </div>
             <div>
                 <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Paket Wisata *</label>
-                <select :class="inputClass(errors.package)" x-model="form.package">
+                <select :class="inputClass(errors.travelPackageId)" x-model="form.travelPackageId" @change="refreshPrice()">
                     <option value="">Pilih paket wisata…</option>
-                    <template x-for="p in packages" :key="p"><option :value="p" x-text="p"></option></template>
+                    <template x-for="p in packages" :key="p.id">
+                        <option :value="p.id" x-text="p.code + ' — ' + p.name + ' (' + p.durasi + ')'"></option>
+                    </template>
                 </select>
-                <p x-show="errors.package" x-cloak class="text-red-500 text-xs mt-1 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span x-text="errors.package"></span></p>
+                <p x-show="selectedPackage()" x-cloak class="text-xs text-slate-500 mt-1" x-text="selectedPackage() ? selectedPackage().destination + ' · min ' + selectedPackage().minParticipants + '–' + selectedPackage().maxParticipants + ' org' : ''"></p>
+                <p x-show="errors.travelPackageId" x-cloak class="text-red-500 text-xs mt-1" x-text="errors.travelPackageId"></p>
             </div>
             <div>
                 <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Tanggal Keberangkatan *</label>
-                <input type="date" :class="inputClass(errors.departureDate)" x-model="form.departureDate" />
+                <input type="date" :class="inputClass(errors.departureDate)" x-model="form.departureDate" @change="refreshPrice()" />
                 <p x-show="errors.departureDate" x-cloak class="text-red-500 text-xs mt-1 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span x-text="errors.departureDate"></span></p>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Jumlah Peserta *</label>
-                    <input type="number" min="1" max="100" placeholder="Min. 1" :class="inputClass(errors.participants)" x-model="form.participants" />
+                    <input type="number" :min="selectedPackage()?.minParticipants || 1" :max="selectedPackage()?.maxParticipants || 100" :class="inputClass(errors.participants)" x-model="form.participants" />
                     <p x-show="errors.participants" x-cloak class="text-red-500 text-xs mt-1" x-text="errors.participants"></p>
                 </div>
                 <div>
-                    <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Harga per Orang (Rp) *</label>
-                    <input type="number" min="0" placeholder="mis. 2500000" :class="inputClass(errors.pricePerPerson)" x-model="form.pricePerPerson" />
-                    <p x-show="errors.pricePerPerson" x-cloak class="text-red-500 text-xs mt-1" x-text="errors.pricePerPerson"></p>
+                    <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Harga per Orang</label>
+                    <p class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-100 text-slate-700 font-semibold tabular-nums" x-text="form.pricePerPerson > 0 ? fmtCurrency(form.pricePerPerson) : 'Pilih paket & tanggal'"></p>
+                    <p class="text-[11px] text-slate-400 mt-1">Otomatis dari paket (dasar / akhir pekan)</p>
                 </div>
             </div>
             <div x-show="formTotal" x-cloak class="bg-teal-50 border border-teal-100 rounded-xl p-3.5 flex items-center justify-between">

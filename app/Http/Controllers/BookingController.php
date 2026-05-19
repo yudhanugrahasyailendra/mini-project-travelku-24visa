@@ -8,6 +8,7 @@ use App\Models\TravelPackage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -44,7 +45,9 @@ class BookingController extends Controller
         return response()->json([
             'bookings' => $bookings,
             'summary' => $summary,
-            'packages' => TravelPackage::active()->pluck('name'),
+            'packages' => TravelPackage::active()
+                ->orderBy('sort_order')
+                ->get(['id', 'name', 'code', 'destination']),
         ]);
     }
 
@@ -52,15 +55,20 @@ class BookingController extends Controller
     {
         $data = $this->validateBookingInput($request);
 
-        $pkg = TravelPackage::where('name', $data['package'])->firstOrFail();
+        $pkg = TravelPackage::where('id', $data['travel_package_id'])
+            ->active()
+            ->firstOrFail();
+
+        $departure = Carbon::parse($data['departure_date']);
 
         $booking = Booking::create([
             'travel_package_id' => $pkg->id,
+            'booking_number' => Booking::generateNumber(),
             'name' => $data['name'],
             'contact' => $data['contact'],
             'departure_date' => $data['departure_date'],
             'participants' => $data['participants'],
-            'price_per_person' => $data['price_per_person'],
+            'price_per_person' => $pkg->getPriceForDate($departure),
             'status' => Booking::STATUS_MENUNGGU,
             'notes' => $data['notes'] ?? null,
         ]);
@@ -73,15 +81,19 @@ class BookingController extends Controller
         ]);
 
         return response()->json([
-            'booking' => $booking->load('travelPackage')->toFrontendArray(),
+            'booking' => $booking->load('travelPackage.category')->toFrontendArray(),
         ], 201);
     }
 
     public function update(Request $request, Booking $booking): JsonResponse
     {
-        $data = $this->validateBookingInput($request);
+        $data = $this->validateBookingInput($request, $booking);
 
-        $pkg = TravelPackage::where('name', $data['package'])->firstOrFail();
+        $pkg = TravelPackage::where('id', $data['travel_package_id'])
+            ->active()
+            ->firstOrFail();
+
+        $departure = Carbon::parse($data['departure_date']);
 
         $booking->update([
             'travel_package_id' => $pkg->id,
@@ -89,12 +101,12 @@ class BookingController extends Controller
             'contact' => $data['contact'],
             'departure_date' => $data['departure_date'],
             'participants' => $data['participants'],
-            'price_per_person' => $data['price_per_person'],
+            'price_per_person' => $pkg->getPriceForDate($departure),
             'notes' => $data['notes'] ?? null,
         ]);
 
         return response()->json([
-            'booking' => $booking->fresh('travelPackage')->toFrontendArray(),
+            'booking' => $booking->fresh('travelPackage.category')->toFrontendArray(),
         ]);
     }
 
@@ -129,7 +141,7 @@ class BookingController extends Controller
 
         return response()->json([
             'message' => "Status diubah ke \"{$newStatus}\".",
-            'booking' => $booking->fresh('travelPackage')->toFrontendArray(),
+            'booking' => $booking->fresh('travelPackage.category')->toFrontendArray(),
         ]);
     }
 
@@ -146,7 +158,7 @@ class BookingController extends Controller
         $filename = 'pemesanan-travelku-'.now()->format('Y-m-d-His').'.csv';
 
         $headers = [
-            'ID',
+            'No. Booking',
             'Nama Pemesan',
             'Kontak',
             'Paket Wisata',
@@ -194,13 +206,15 @@ class BookingController extends Controller
 
     private function filteredBookingsQuery(Request $request): Builder
     {
-        $query = Booking::with('travelPackage')->latest();
+        $query = Booking::with(['travelPackage.category'])->latest();
 
         if ($request->filled('status')) {
             $query->byStatus($request->status);
         }
-        if ($request->filled('package')) {
-            $query->byPackage($request->package);
+
+        $package = $request->input('package_id') ?? $request->input('package');
+        if ($package) {
+            $query->byPackage($package);
         }
 
         $dateFrom = $request->input('date_from') ?? $request->input('dateFrom');
@@ -220,26 +234,43 @@ class BookingController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function validateBookingInput(Request $request): array
+    private function validateBookingInput(Request $request, ?Booking $booking = null): array
     {
-        $input = [
-            'name' => $request->input('name'),
-            'contact' => $request->input('contact'),
-            'package' => $request->input('package'),
-            'departure_date' => $request->input('departureDate') ?? $request->input('departure_date'),
-            'participants' => $request->input('participants'),
-            'price_per_person' => $request->input('pricePerPerson') ?? $request->input('price_per_person'),
-            'notes' => $request->input('notes'),
-        ];
+        $packageId = $request->input('travelPackageId')
+            ?? $request->input('travel_package_id');
 
-        return validator($input, [
-            'name' => ['required', 'min:3', 'regex:/^[\pL\s]+$/u'],
-            'contact' => ['required', 'regex:/^(08|\+62)[0-9]{8,13}$|^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i'],
-            'package' => ['required', Rule::exists('travel_packages', 'name')->where('is_active', true)],
-            'departure_date' => ['required', 'date', 'after_or_equal:today'],
-            'participants' => ['required', 'integer', 'min:1', 'max:100'],
-            'price_per_person' => ['required', 'numeric', 'min:10000'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ])->validate();
+        $pkg = $packageId ? TravelPackage::active()->find($packageId) : null;
+
+        $validated = validator(
+            [
+                'travel_package_id' => $packageId,
+                'name' => $request->input('name'),
+                'contact' => $request->input('contact'),
+                'departure_date' => $request->input('departureDate') ?? $request->input('departure_date'),
+                'participants' => $request->input('participants'),
+                'notes' => $request->input('notes'),
+            ],
+            [
+                'travel_package_id' => ['required', 'integer', Rule::exists('travel_packages', 'id')->where('is_active', true)],
+                'name' => ['required', 'min:3', 'regex:/^[\pL\s]+$/u'],
+                'contact' => ['required', 'regex:/^(08|\+62)[0-9]{8,13}$|^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i'],
+                'departure_date' => ['required', 'date', 'after_or_equal:today'],
+                'participants' => [
+                    'required',
+                    'integer',
+                    'min:'.($pkg?->min_participants ?? 1),
+                    'max:'.($pkg?->max_participants ?? 100),
+                ],
+                'notes' => ['nullable', 'string', 'max:1000'],
+            ],
+            [
+                'travel_package_id.required' => 'Paket wisata wajib dipilih.',
+                'travel_package_id.exists' => 'Paket wisata tidak valid atau tidak aktif.',
+                'participants.min' => 'Jumlah peserta di bawah minimum paket.',
+                'participants.max' => 'Jumlah peserta melebihi maksimum paket.',
+            ],
+        )->validate();
+
+        return $validated;
     }
 }

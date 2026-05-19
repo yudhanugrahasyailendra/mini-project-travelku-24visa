@@ -24,9 +24,9 @@
         </div>
         <div>
             <label class="text-xs text-slate-500 font-medium mb-1.5 block">Paket Wisata</label>
-            <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500" x-model="filters.package">
+            <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500" x-model="filters.packageId">
                 <option value="">Semua Paket</option>
-                <template x-for="p in packages" :key="p"><option :value="p" x-text="p"></option></template>
+                <template x-for="p in packages" :key="p.id"><option :value="p.id" x-text="p.code + ' — ' + p.name"></option></template>
             </select>
         </div>
         <div>

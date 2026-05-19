@@ -8,18 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('travel_packages', function (Blueprint $table) {
+        Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100)->unique()->comment('Nama paket, mis. Bali 4D3N');
-            $table->string('duration', 20)->nullable()->comment('Durasi, mis. 4D3N');
-            $table->string('destination', 100)->nullable();
+            $table->string('name', 80)->unique();
+            $table->string('slug', 80)->unique();
+            $table->text('description')->nullable();
+            $table->string('icon', 100)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            $table->index('is_active');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('travel_packages');
+        Schema::dropIfExists('categories');
     }
 };

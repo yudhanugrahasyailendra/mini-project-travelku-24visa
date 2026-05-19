@@ -1,7 +1,7 @@
 const EMPTY_FORM = {
     name: '',
     contact: '',
-    package: '',
+    travelPackageId: '',
     departureDate: '',
     participants: 1,
     pricePerPerson: 0,
@@ -42,7 +42,7 @@ document.addEventListener('alpine:init', () => {
         csrfToken: config.csrfToken,
 
         bookings: config.bookings,
-        filters: { status: '', package: '', dateFrom: '', dateTo: '' },
+        filters: { status: '', packageId: '', dateFrom: '', dateTo: '' },
         search: '',
         showFilters: false,
         mobileNav: false,
@@ -71,7 +71,9 @@ document.addEventListener('alpine:init', () => {
         get filtered() {
             let list = [...this.bookings].sort((a, b) => b.createdAt - a.createdAt);
             if (this.filters.status) list = list.filter((b) => b.status === this.filters.status);
-            if (this.filters.package) list = list.filter((b) => b.package === this.filters.package);
+            if (this.filters.packageId) {
+                list = list.filter((b) => String(b.travelPackageId) === String(this.filters.packageId));
+            }
             if (this.filters.dateFrom) list = list.filter((b) => b.departureDate >= this.filters.dateFrom);
             if (this.filters.dateTo) list = list.filter((b) => b.departureDate <= this.filters.dateTo);
             if (this.search.trim()) {
@@ -79,7 +81,8 @@ document.addEventListener('alpine:init', () => {
                 list = list.filter(
                     (b) =>
                         b.name.toLowerCase().includes(q) ||
-                        b.contact.toLowerCase().includes(q),
+                        b.contact.toLowerCase().includes(q) ||
+                        (b.bookingNumber && b.bookingNumber.toLowerCase().includes(q)),
                 );
             }
             return list;
@@ -103,10 +106,22 @@ document.addEventListener('alpine:init', () => {
             return Object.values(this.filters).filter((v) => v).length + (this.search ? 1 : 0);
         },
 
+        selectedPackage() {
+            return this.packages.find((p) => String(p.id) === String(this.form.travelPackageId));
+        },
+
         get formTotal() {
             const p = Number(this.form.participants);
             const price = Number(this.form.pricePerPerson);
             return p > 0 && price > 0 ? fmtCurrency(p * price) : null;
+        },
+
+        async refreshPrice() {
+            if (!this.form.travelPackageId || !this.form.departureDate) return;
+            const result = await this.validateServer(this.form);
+            if (result.valid && result.pricePerPerson) {
+                this.form.pricePerPerson = result.pricePerPerson;
+            }
         },
 
         transitionsFor(status) {
@@ -127,7 +142,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         openEdit(booking) {
-            this.form = { ...booking };
+            this.form = {
+                name: booking.name,
+                contact: booking.contact,
+                travelPackageId: booking.travelPackageId,
+                departureDate: booking.departureDate,
+                participants: booking.participants,
+                pricePerPerson: booking.pricePerPerson,
+                notes: booking.notes,
+            };
             this.errors = {};
             this.modal = { open: true, mode: 'edit', booking };
         },
@@ -137,14 +160,14 @@ document.addEventListener('alpine:init', () => {
         },
 
         resetAll() {
-            this.filters = { status: '', package: '', dateFrom: '', dateTo: '' };
+            this.filters = { status: '', packageId: '', dateFrom: '', dateTo: '' };
             this.search = '';
         },
 
         exportQueryParams() {
             const params = new URLSearchParams();
             if (this.filters.status) params.set('status', this.filters.status);
-            if (this.filters.package) params.set('package', this.filters.package);
+            if (this.filters.packageId) params.set('package_id', this.filters.packageId);
             if (this.filters.dateFrom) params.set('date_from', this.filters.dateFrom);
             if (this.filters.dateTo) params.set('date_to', this.filters.dateTo);
             if (this.search.trim()) params.set('search', this.search.trim());
@@ -177,6 +200,9 @@ document.addEventListener('alpine:init', () => {
             this.validating = true;
             this.errors = {};
             const result = await this.validateServer(this.form);
+            if (result.valid && result.pricePerPerson) {
+                this.form.pricePerPerson = result.pricePerPerson;
+            }
             if (!result.valid) {
                 const raw = result.errors || {};
                 this.errors = Object.fromEntries(

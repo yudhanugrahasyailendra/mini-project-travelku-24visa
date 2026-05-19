@@ -16,23 +16,23 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            $table->string('name', 150)->comment('Nama lengkap pemesan');
-            $table->string('contact', 150)->comment('No. HP atau email');
-
-            $table->date('departure_date')->comment('Tanggal keberangkatan');
-            $table->unsignedSmallInteger('participants')->default(1)->comment('Jumlah peserta 1-100');
-            $table->decimal('price_per_person', 12, 2)->comment('Harga per orang (IDR)');
+            $table->string('booking_number', 20)->unique();
+            $table->string('name', 150);
+            $table->string('contact', 150);
+            $table->date('departure_date');
+            $table->unsignedTinyInteger('participants')->default(1);
+            $table->decimal('price_per_person', 12, 2);
 
             $table->enum('status', ['Menunggu', 'Dikonfirmasi', 'Selesai', 'Dibatalkan'])
                 ->default('Menunggu');
-
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->index('status');
             $table->index('departure_date');
-            $table->index(['travel_package_id', 'status'], 'idx_package_status');
+            $table->index(['travel_package_id', 'status'], 'idx_pkg_status');
+            $table->index('booking_number');
         });
 
         $driver = Schema::getConnection()->getDriverName();
@@ -42,7 +42,7 @@ return new class extends Migration
                 ALTER TABLE bookings
                 ADD COLUMN total_price DECIMAL(14,2)
                 GENERATED ALWAYS AS (participants * price_per_person) STORED
-                COMMENT "Total harga (otomatis)"
+                COMMENT "Total otomatis"
                 AFTER price_per_person
             ');
         } else {

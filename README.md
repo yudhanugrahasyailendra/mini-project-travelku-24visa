@@ -69,7 +69,9 @@ php artisan migrate
 php artisan db:seed
 ```
 
-Seeder akan mengisi **paket wisata** dan **contoh pemesanan** agar UI langsung bisa dicoba.
+Seeder akan mengisi **6 kategori**, **9 paket wisata** (PKG-001–009), dan **6 contoh pemesanan** (BK-20260001–006) sesuai skema `travelku_full.sql`.
+
+> **Reset database:** `php artisan migrate:fresh --seed`
 
 ### 5. Instal & build asset frontend
 
@@ -142,7 +144,9 @@ routes/web.php        # Route halaman & API booking
 | Ubah status | Aturan transisi: Menunggu → Dikonfirmasi/Dibatalkan; Dikonfirmasi → Selesai/Dibatalkan |
 | Riwayat status | Tercatat di `booking_status_logs` |
 | Validasi input | Nama (huruf), kontak (HP Indonesia / email), paket aktif, tanggal tidak lampau, peserta & harga minimum |
-| Filter lanjutan | Status, paket wisata, rentang tanggal keberangkatan |
+| Filter lanjutan | Status, paket wisata (by ID), rentang tanggal keberangkatan |
+| Nomor booking | Auto-generate `BK-YYYY####`; tampil di tabel & export CSV |
+| Harga otomatis | Diambil dari paket (`base_price` / weekend) saat tambah/edit booking |
 | API REST | `GET/POST/PUT/PATCH/DELETE` pada `/bookings` (+ validasi & laporan) |
 | UI responsif | Sidebar, layout mobile-friendly |
 
@@ -152,13 +156,13 @@ routes/web.php        # Route halaman & API booking
 |-------|------------|
 | **Pencarian nama pemesan / kontak** | Kotak pencarian di dashboard; filter real-time di browser; scope `search` di API `GET /bookings?search=...` |
 | **Export data pemesanan ke CSV** | Tombol **Export CSV** di daftar pemesanan; unduh file UTF-8 (BOM) untuk Excel; mengikuti filter aktif (status, paket, tanggal, pencarian); endpoint `GET /bookings/export` |
+| **Modul Paket Wisata** | Halaman `/packages` — CRUD paket dengan kategori, kode, durasi hari/malam, harga dasar/weekend, min/max peserta |
 
 ### Belum diimplementasi (placeholder di UI / roadmap)
 
 | Fitur | Keterangan |
 |-------|------------|
 | Modul **Data Pelanggan** | Menu sidebar ada, halaman belum dibuat |
-| Modul **Paket Wisata** (CRUD) | Paket hanya di-seed; belum ada halaman kelola paket |
 | Halaman **Laporan** | Endpoint `GET /bookings/report` sudah ada; UI laporan belum |
 | **Autentikasi** login | Aplikasi diasumsikan internal tanpa login |
 | Pagination server-side | Semua data dimuat ke halaman awal |
@@ -169,8 +173,12 @@ routes/web.php        # Route halaman & API booking
 
 | Method | Endpoint | Fungsi |
 |--------|----------|--------|
-| `GET` | `/` | Halaman dashboard |
-| `GET` | `/bookings` | Daftar booking (`?status=&package=&date_from=&date_to=&search=`) |
+| `GET` | `/` | Halaman dashboard pemesanan |
+| `GET` | `/packages` | Halaman kelola paket wisata |
+| `POST` | `/packages` | Tambah paket |
+| `PUT` | `/packages/{id}` | Update paket |
+| `DELETE` | `/packages/{id}` | Hapus paket (jika tidak ada booking aktif) |
+| `GET` | `/bookings` | Daftar booking (`?status=&package_id=&date_from=&date_to=&search=`) |
 | `POST` | `/bookings` | Buat booking |
 | `PUT` | `/bookings/{id}` | Update booking |
 | `PATCH` | `/bookings/{id}/status` | Ubah status |
@@ -190,8 +198,9 @@ routes/web.php        # Route halaman & API booking
 5. **SQLite sebagai default** — Meminimalkan langkah setup lokal; MySQL siap untuk deployment yang membutuhkan DB bersama.
 6. **Aturan status terpusat** — Transisi status didefinisikan di `config/travelku.php` dan `Booking::STATUS_TRANSITIONS` agar tidak bisa loncat status secara sembarangan.
 7. **Kontak fleksibel** — Menerima nomor HP format `08` / `+62` atau email valid.
-8. **Total harga di database** — Kolom `total_price` generated (`participants × price_per_person`) untuk konsistensi laporan.
-9. **Soft delete** — Pemesanan yang dihapus tidak hilang permanen dari database.
+8. **Skema modul paket** — Tabel `categories`, `travel_packages` (relasi kategori, soft delete), dan `bookings` dengan snapshot harga paket; referensi `travelku_full.sql` & migrasi di `database/migrations/2024_01_01_*`.
+9. **Total harga di database** — Kolom `total_price` generated (`participants × price_per_person`) untuk konsistensi laporan.
+10. **Soft delete** — Pemesanan dan paket wisata yang dihapus tidak hilang permanen dari database.
 
 ---
 

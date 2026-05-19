@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\TravelPackage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -14,7 +15,7 @@ class TravelKuController extends Controller
 {
     public function index(): View
     {
-        $bookings = Booking::with('travelPackage')
+        $bookings = Booking::with(['travelPackage.category'])
             ->latest()
             ->get()
             ->map->toFrontendArray()
@@ -22,7 +23,13 @@ class TravelKuController extends Controller
             ->all();
 
         return view('travelku.index', [
-            'packages' => TravelPackage::active()->orderBy('name')->pluck('name')->values()->all(),
+            'packages' => TravelPackage::active()
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map->toBookingOptionArray()
+                ->values()
+                ->all(),
             'statuses' => config('travelku.statuses'),
             'statusTransitions' => config('travelku.status_transitions'),
             'bookings' => $bookings,
@@ -31,7 +38,10 @@ class TravelKuController extends Controller
 
     public function validateBooking(Request $request): JsonResponse
     {
-        $activePackages = TravelPackage::active()->pluck('name')->all();
+        $packageId = $request->input('travelPackageId') ?? $request->input('travel_package_id');
+        $pkg = $packageId
+            ? TravelPackage::active()->find($packageId)
+            : null;
 
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:3', 'regex:/^[\pL\s]+$/u'],
@@ -43,24 +53,20 @@ class TravelKuController extends Controller
                     $fail('Kontak harus berupa nomor HP Indonesia (08/+62) atau email yang valid.');
                 }
             }],
-            'package' => ['required', 'string', Rule::in($activePackages)],
+            'travelPackageId' => ['required', 'integer', Rule::exists('travel_packages', 'id')->where('is_active', true)],
             'departureDate' => ['required', 'date', 'after_or_equal:today'],
-            'participants' => ['required', 'integer', 'min:1', 'max:100'],
-            'pricePerPerson' => ['required', 'numeric', 'min:10000'],
+            'participants' => ['required', 'integer', 'min:1'],
         ], [
             'name.required' => 'Nama pemesan wajib diisi.',
             'name.min' => 'Nama pemesan minimal 3 karakter.',
             'name.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
             'contact.required' => 'Kontak wajib diisi.',
-            'package.required' => 'Paket wisata wajib dipilih.',
-            'package.in' => 'Paket wisata tidak valid.',
+            'travelPackageId.required' => 'Paket wisata wajib dipilih.',
+            'travelPackageId.exists' => 'Paket wisata tidak valid atau tidak aktif.',
             'departureDate.required' => 'Tanggal keberangkatan wajib diisi.',
             'departureDate.after_or_equal' => 'Tanggal keberangkatan tidak boleh di masa lalu.',
             'participants.required' => 'Jumlah peserta wajib diisi.',
             'participants.min' => 'Jumlah peserta minimal 1.',
-            'participants.max' => 'Jumlah peserta maksimal 100.',
-            'pricePerPerson.required' => 'Harga per orang wajib diisi.',
-            'pricePerPerson.min' => 'Harga per orang minimal Rp 10.000.',
         ]);
 
         if ($validator->fails()) {
@@ -70,9 +76,24 @@ class TravelKuController extends Controller
             ]);
         }
 
+        if ($pkg && $request->filled('participants')) {
+            $p = (int) $request->participants;
+            if ($p < $pkg->min_participants || $p > $pkg->max_participants) {
+                return response()->json([
+                    'valid' => false,
+                    'errors' => [
+                        'participants' => ["Peserta harus antara {$pkg->min_participants} – {$pkg->max_participants} orang."],
+                    ],
+                ]);
+            }
+        }
+
         return response()->json([
             'valid' => true,
             'errors' => (object) [],
+            'pricePerPerson' => $pkg
+                ? $pkg->getPriceForDate(Carbon::parse($request->departureDate))
+                : null,
         ]);
     }
 }

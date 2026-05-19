@@ -2,9 +2,15 @@
 
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\TravelKuController;
+use App\Http\Controllers\TravelPackageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [TravelKuController::class, 'index'])->name('travelku.index');
+
+Route::get('/packages', [TravelPackageController::class, 'index'])->name('packages.index');
+Route::post('/packages', [TravelPackageController::class, 'store'])->name('packages.store');
+Route::put('/packages/{travelPackage}', [TravelPackageController::class, 'update'])->name('packages.update');
+Route::delete('/packages/{travelPackage}', [TravelPackageController::class, 'destroy'])->name('packages.destroy');
 
 Route::post('/bookings/validate', [TravelKuController::class, 'validateBooking'])->name('bookings.validate');
 

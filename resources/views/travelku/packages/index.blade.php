@@ -3,19 +3,15 @@
 @section('content')
 <div
     class="h-dvh flex overflow-hidden bg-slate-100 font-sans"
-    x-data="travelKu({
+    x-data="travelPackages({
         packages: @js($packages),
-        statuses: @js($statuses),
-        statusTransitions: @js($statusTransitions),
-        bookings: @js($bookings),
-        validateUrl: @js(route('bookings.validate')),
-        bookingsUrl: @js(url('/bookings')),
+        categories: @js($categories),
+        packagesUrl: @js(url('/packages')),
         csrfToken: @js(csrf_token()),
     })"
 >
     @include('travelku.partials.toast')
 
-    {{-- Mobile overlay --}}
     <div
         x-show="mobileNav"
         x-transition.opacity
@@ -24,9 +20,8 @@
         x-cloak
     ></div>
 
-    @include('travelku.partials.sidebar', ['activeMenu' => 'bookings'])
+    @include('travelku.partials.sidebar', ['activeMenu' => 'packages'])
 
-    {{-- Main --}}
     <div class="flex-1 flex flex-col min-w-0 min-h-0 h-dvh">
         <header class="bg-white border-b border-slate-200 px-3 sm:px-5 py-3 flex items-center justify-between gap-2 shrink-0">
             <div class="flex items-center gap-2 min-w-0">
@@ -34,31 +29,31 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
                 <div class="min-w-0">
-                    <h1 class="font-bold text-slate-800 text-sm sm:text-lg truncate">Manajemen Pemesanan</h1>
-                    <p class="text-slate-400 text-[11px] sm:text-xs truncate hidden sm:block">Kelola pemesanan paket wisata</p>
+                    <h1 class="font-bold text-slate-800 text-sm sm:text-lg truncate">Paket Wisata</h1>
+                    <p class="text-slate-400 text-[11px] sm:text-xs truncate hidden sm:block">Kelola daftar paket perjalanan</p>
                 </div>
             </div>
             <button type="button" @click="openAdd()"
                 class="flex items-center gap-1.5 bg-teal-700 hover:bg-teal-800 text-white px-3 py-2 rounded-xl font-semibold text-sm shadow-sm transition-colors shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                <span class="hidden sm:inline">Tambah Pemesanan</span>
+                <span class="hidden sm:inline">Tambah Paket</span>
                 <span class="sm:hidden">Tambah</span>
             </button>
         </header>
 
         <main class="flex-1 flex flex-col min-h-0 gap-3 p-3 sm:p-4 overflow-hidden">
             <div class="shrink-0">
-                @include('travelku.partials.summary')
+                @include('travelku.packages.partials.summary')
             </div>
             <div class="shrink-0">
-                @include('travelku.partials.filters')
+                @include('travelku.packages.partials.filters')
             </div>
             <div class="flex-1 min-h-0 flex flex-col">
-                @include('travelku.partials.table')
+                @include('travelku.packages.partials.table')
             </div>
         </main>
     </div>
 
-    @include('travelku.partials.modals')
+    @include('travelku.packages.partials.modals')
 </div>
 @endsection

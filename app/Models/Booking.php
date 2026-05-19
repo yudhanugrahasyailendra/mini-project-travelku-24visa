@@ -13,6 +13,7 @@ class Booking extends Model
 
     protected $fillable = [
         'travel_package_id',
+        'booking_number',
         'name',
         'contact',
         'departure_date',
@@ -59,9 +60,13 @@ class Booking extends Model
         return $query->where('status', $status);
     }
 
-    public function scopeByPackage($query, string $packageName)
+    public function scopeByPackage($query, int|string $package)
     {
-        return $query->whereHas('travelPackage', fn ($q) => $q->where('name', $packageName));
+        if (is_numeric($package)) {
+            return $query->where('travel_package_id', $package);
+        }
+
+        return $query->whereHas('travelPackage', fn ($q) => $q->where('name', $package));
     }
 
     public function scopeDateFrom($query, string $date)
@@ -74,14 +79,14 @@ class Booking extends Model
         return $query->where('departure_date', '<=', $date);
     }
 
-    /** Pencarian berdasarkan nama pemesan atau kontak (HP/email). */
     public function scopeSearch($query, string $keyword)
     {
         $term = '%'.addcslashes(trim($keyword), '%_\\').'%';
 
         return $query->where(function ($q) use ($term) {
             $q->where('name', 'like', $term)
-                ->orWhere('contact', 'like', $term);
+                ->orWhere('contact', 'like', $term)
+                ->orWhere('booking_number', 'like', $term);
         });
     }
 
@@ -95,13 +100,20 @@ class Booking extends Model
         return (float) ($this->total_price ?? ($this->participants * $this->price_per_person));
     }
 
-    /** Baris data untuk export CSV. */
+    public static function generateNumber(): string
+    {
+        $year = now()->year;
+        $count = static::whereYear('created_at', $year)->withTrashed()->count() + 1;
+
+        return 'BK-'.$year.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+    }
+
     public function toCsvRow(): array
     {
         $this->loadMissing('travelPackage');
 
         return [
-            $this->id,
+            $this->booking_number,
             $this->name,
             $this->contact,
             $this->travelPackage?->name ?? '',
@@ -115,16 +127,20 @@ class Booking extends Model
         ];
     }
 
-    /** Format untuk Alpine.js (camelCase) */
     public function toFrontendArray(): array
     {
-        $this->loadMissing('travelPackage');
+        $this->loadMissing('travelPackage.category');
 
         return [
             'id' => $this->id,
+            'bookingNumber' => $this->booking_number,
+            'travelPackageId' => $this->travel_package_id,
             'name' => $this->name,
             'contact' => $this->contact,
             'package' => $this->travelPackage?->name ?? '',
+            'packageCode' => $this->travelPackage?->code ?? '',
+            'destination' => $this->travelPackage?->destination ?? '',
+            'durasi' => $this->travelPackage?->durasi ?? '',
             'departureDate' => $this->departure_date?->format('Y-m-d') ?? '',
             'participants' => (int) $this->participants,
             'pricePerPerson' => (float) $this->price_per_person,
