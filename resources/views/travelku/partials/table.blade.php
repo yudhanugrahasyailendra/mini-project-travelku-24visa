@@ -1,11 +1,22 @@
 <div class="flex flex-col flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
     {{-- Header --}}
-    <div class="shrink-0 px-3 sm:px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+    <div class="shrink-0 px-3 sm:px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <h2 class="font-bold text-slate-700 text-sm">
             Daftar Pemesanan
             <span class="ml-2 bg-teal-100 text-teal-700 text-xs font-semibold px-2 py-0.5 rounded-full" x-text="filtered.length"></span>
         </h2>
-        <p class="text-[11px] sm:text-xs text-slate-400">Terbaru di atas</p>
+        <div class="flex items-center gap-2 shrink-0">
+            <button
+                type="button"
+                @click="exportCsv()"
+                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-teal-200 hover:text-teal-700 transition-colors"
+                title="Export daftar ke CSV"
+            >
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Export CSV
+            </button>
+            <p class="text-[11px] sm:text-xs text-slate-400 hidden sm:block">Terbaru di atas</p>
+        </div>
     </div>
 
     {{-- Mobile: card list --}}

@@ -141,6 +141,27 @@ document.addEventListener('alpine:init', () => {
             this.search = '';
         },
 
+        exportQueryParams() {
+            const params = new URLSearchParams();
+            if (this.filters.status) params.set('status', this.filters.status);
+            if (this.filters.package) params.set('package', this.filters.package);
+            if (this.filters.dateFrom) params.set('date_from', this.filters.dateFrom);
+            if (this.filters.dateTo) params.set('date_to', this.filters.dateTo);
+            if (this.search.trim()) params.set('search', this.search.trim());
+            return params;
+        },
+
+        exportCsv() {
+            const query = this.exportQueryParams().toString();
+            const url = `${this.bookingsUrl}/export${query ? `?${query}` : ''}`;
+            window.location.assign(url);
+            this.showToast(
+                this.hasFilter
+                    ? 'Mengunduh CSV sesuai filter aktif…'
+                    : 'Mengunduh semua pemesanan ke CSV…',
+            );
+        },
+
         async validateServer(data) {
             try {
                 const res = await window.axios.post(this.validateUrl, data, {

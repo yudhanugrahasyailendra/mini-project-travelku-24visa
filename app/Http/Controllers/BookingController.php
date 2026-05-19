@@ -5,34 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\TravelPackage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BookingController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Booking::with('travelPackage')->latest();
-
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-        if ($request->filled('package')) {
-            $query->byPackage($request->package);
-        }
-        if ($request->filled('date_from')) {
-            $query->dateFrom($request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->dateTo($request->date_to);
-        }
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-
-        $bookings = $query->get()->map->toFrontendArray();
+        $bookings = $this->filteredBookingsQuery($request)->get()->map->toFrontendArray();
 
         $summaryQuery = Booking::query();
         $driver = DB::connection()->getDriverName();
@@ -156,6 +140,38 @@ class BookingController extends Controller
         return response()->json(['message' => 'Pemesanan dihapus.']);
     }
 
+    public function export(Request $request): StreamedResponse
+    {
+        $bookings = $this->filteredBookingsQuery($request)->get();
+        $filename = 'pemesanan-travelku-'.now()->format('Y-m-d-His').'.csv';
+
+        $headers = [
+            'ID',
+            'Nama Pemesan',
+            'Kontak',
+            'Paket Wisata',
+            'Tanggal Berangkat',
+            'Jumlah Peserta',
+            'Harga per Orang (IDR)',
+            'Total Harga (IDR)',
+            'Status',
+            'Catatan',
+            'Dibuat Pada',
+        ];
+
+        return response()->streamDownload(function () use ($bookings, $headers) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, $headers);
+            foreach ($bookings as $booking) {
+                fputcsv($handle, $booking->toCsvRow());
+            }
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     public function report(): JsonResponse
     {
         $report = DB::table('bookings AS b')
@@ -174,6 +190,33 @@ class BookingController extends Controller
             ->get();
 
         return response()->json($report);
+    }
+
+    private function filteredBookingsQuery(Request $request): Builder
+    {
+        $query = Booking::with('travelPackage')->latest();
+
+        if ($request->filled('status')) {
+            $query->byStatus($request->status);
+        }
+        if ($request->filled('package')) {
+            $query->byPackage($request->package);
+        }
+
+        $dateFrom = $request->input('date_from') ?? $request->input('dateFrom');
+        $dateTo = $request->input('date_to') ?? $request->input('dateTo');
+
+        if ($dateFrom) {
+            $query->dateFrom($dateFrom);
+        }
+        if ($dateTo) {
+            $query->dateTo($dateTo);
+        }
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+
+        return $query;
     }
 
     /** @return array<string, mixed> */

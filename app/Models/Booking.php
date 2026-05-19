@@ -95,6 +95,26 @@ class Booking extends Model
         return (float) ($this->total_price ?? ($this->participants * $this->price_per_person));
     }
 
+    /** Baris data untuk export CSV. */
+    public function toCsvRow(): array
+    {
+        $this->loadMissing('travelPackage');
+
+        return [
+            $this->id,
+            $this->name,
+            $this->contact,
+            $this->travelPackage?->name ?? '',
+            $this->departure_date?->format('Y-m-d') ?? '',
+            (int) $this->participants,
+            (float) $this->price_per_person,
+            $this->getTotalHarga(),
+            $this->status,
+            $this->notes ?? '',
+            $this->created_at?->format('Y-m-d H:i:s') ?? '',
+        ];
+    }
+
     /** Format untuk Alpine.js (camelCase) */
     public function toFrontendArray(): array
     {

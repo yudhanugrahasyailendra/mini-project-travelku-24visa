@@ -9,6 +9,7 @@ Route::get('/', [TravelKuController::class, 'index'])->name('travelku.index');
 Route::post('/bookings/validate', [TravelKuController::class, 'validateBooking'])->name('bookings.validate');
 
 Route::get('/bookings/report', [BookingController::class, 'report'])->name('bookings.report');
+Route::get('/bookings/export', [BookingController::class, 'export'])->name('bookings.export');
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
 Route::put('/bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
