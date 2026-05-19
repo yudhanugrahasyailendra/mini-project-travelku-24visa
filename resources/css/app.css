@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+[x-cloak] {
+    display: none !important;
+}
+
+.booking-table {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.booking-table th,
+.booking-table td {
+    vertical-align: middle;
+}
+
+/* Full-height app shell — hindari gap kosong di bawah */
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+    .h-dvh {
+        height: 100dvh;
+    }
+}
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
