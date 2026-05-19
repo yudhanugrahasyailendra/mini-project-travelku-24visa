@@ -121,7 +121,7 @@ database/
   migrations/         # Skema bookings, packages, status logs
   seeders/            # Data awal paket & pemesanan
 resources/
-  js/travelku.js      # Logika Alpine.js (filter, CRUD, pencarian)
+  js/travelku.js      # Logika Alpine.js (filter, CRUD, pencarian, export CSV)
   views/travelku/     # Blade: dashboard, tabel, modal, filter
 routes/web.php        # Route halaman & API booking
 ```
@@ -151,6 +151,7 @@ routes/web.php        # Route halaman & API booking
 | Fitur | Keterangan |
 |-------|------------|
 | **Pencarian nama pemesan / kontak** | Kotak pencarian di dashboard; filter real-time di browser; scope `search` di API `GET /bookings?search=...` |
+| **Export data pemesanan ke CSV** | Tombol **Export CSV** di daftar pemesanan; unduh file UTF-8 (BOM) untuk Excel; mengikuti filter aktif (status, paket, tanggal, pencarian); endpoint `GET /bookings/export` |
 
 ### Belum diimplementasi (placeholder di UI / roadmap)
 
@@ -176,6 +177,7 @@ routes/web.php        # Route halaman & API booking
 | `DELETE` | `/bookings/{id}` | Hapus booking |
 | `POST` | `/bookings/validate` | Validasi form sebelum simpan |
 | `GET` | `/bookings/report` | Laporan agregat per paket (JSON) |
+| `GET` | `/bookings/export` | Export daftar pemesanan ke CSV (`?status=&package=&date_from=&date_to=&search=`) |
 
 ---
 
@@ -183,12 +185,13 @@ routes/web.php        # Route halaman & API booking
 
 1. **Pengguna tunggal / internal** — Tidak ada autentikasi; semua aksi dicatat sebagai "Staff Agen" di log status.
 2. **Arsitektur ringan** — Blade + Alpine.js, bukan SPA React/Vue, agar scope mini-project tetap terkontrol.
-3. **Filter & pencarian di klien** — Data booking dimuat sekali saat halaman dibuka; filter status/paket/tanggal dan pencarian nama/kontak dijalankan di browser. Cukup untuk ratusan record; API tetap mendukung query untuk integrasi ke depan.
-4. **SQLite sebagai default** — Meminimalkan langkah setup lokal; MySQL siap untuk deployment yang membutuhkan DB bersama.
-5. **Aturan status terpusat** — Transisi status didefinisikan di `config/travelku.php` dan `Booking::STATUS_TRANSITIONS` agar tidak bisa loncat status secara sembarangan.
-6. **Kontak fleksibel** — Menerima nomor HP format `08` / `+62` atau email valid.
-7. **Total harga di database** — Kolom `total_price` generated (`participants × price_per_person`) untuk konsistensi laporan.
-8. **Soft delete** — Pemesanan yang dihapus tidak hilang permanen dari database.
+3. **Filter & pencarian di klien** — Data booking dimuat sekali saat halaman dibuka; filter status/paket/tanggal dan pencarian nama/kontak dijalankan di browser. Cukup untuk ratusan record; API tetap mendukung query yang sama untuk export CSV.
+4. **Export CSV di server** — File dihasilkan oleh Laravel (`streamDownload`) dengan filter query string yang sama seperti daftar booking, agar hasil export konsisten dengan data yang difilter.
+5. **SQLite sebagai default** — Meminimalkan langkah setup lokal; MySQL siap untuk deployment yang membutuhkan DB bersama.
+6. **Aturan status terpusat** — Transisi status didefinisikan di `config/travelku.php` dan `Booking::STATUS_TRANSITIONS` agar tidak bisa loncat status secara sembarangan.
+7. **Kontak fleksibel** — Menerima nomor HP format `08` / `+62` atau email valid.
+8. **Total harga di database** — Kolom `total_price` generated (`participants × price_per_person`) untuk konsistensi laporan.
+9. **Soft delete** — Pemesanan yang dihapus tidak hilang permanen dari database.
 
 ---
 
@@ -212,7 +215,7 @@ Pastikan di production:
 - **CRUD paket wisata** — Kelola paket tanpa menyentuh seeder/database manual.
 - **Modul pelanggan terpisah** — Profil pelanggan berulang, riwayat per nama/kontak.
 - **Automated tests** — Feature test untuk CRUD, transisi status, dan pencarian API.
-- **Export PDF/Excel** — Laporan pendapatan untuk kebutuhan administrasi agen.
+- **Export PDF/Excel lanjutan** — Format tambahan selain CSV (mis. laporan pendapatan terformat).
 - **Notifikasi** — Email/WA saat status berubah ke Dikonfirmasi.
 
 ---
